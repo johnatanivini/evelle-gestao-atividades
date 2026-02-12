@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gerenciador de Rotina da Evelle</title>
+<title>Rotina Segura da Evelle</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
 
@@ -20,61 +20,65 @@
         padding-bottom: 50px;
     }
 
-    h1 {
-        text-align: center;
-        color: #E91E63;
-        margin-bottom: 10px;
-        font-size: 2.2em;
-    }
-
-    .date-display {
-        text-align: center;
-        color: #555;
-        font-size: 1.2em;
-        margin-bottom: 20px;
-        font-weight: bold;
-    }
-
-    /* --- GRID DE DASHBOARDS (Hoje, Semana, Mês) --- */
-    .dashboard-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 15px;
-        margin-bottom: 30px;
-    }
-
-    .stat-card {
+    /* --- BARRA DE CONTROLE (LOGIN) --- */
+    .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         background: white;
-        padding: 15px;
-        border-radius: 12px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        border-top: 5px solid #ddd;
-        text-align: center;
-        transition: transform 0.2s;
+        padding: 10px 20px;
+        border-radius: 50px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        border: 2px solid #ddd;
     }
-    
-    .stat-card:hover { transform: translateY(-5px); }
 
-    .stat-title { font-size: 1.1em; color: #777; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; }
+    .status-badge {
+        font-weight: bold;
+        padding: 5px 15px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        font-size: 0.9em;
+    }
+
+    .status-locked { background-color: #ffebee; color: #c62828; }
+    .status-unlocked { background-color: #e8f5e9; color: #2e7d32; }
+
+    .btn-login {
+        background-color: #607D8B;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+    .btn-login:hover { background-color: #455A64; }
+    .btn-login.active { background-color: #f44336; } /* Botão virar Sair */
+
+    /* --- ESTILOS GERAIS --- */
+    h1 { text-align: center; color: #E91E63; margin-bottom: 5px; font-size: 2.2em; }
+    .date-display { text-align: center; color: #555; font-size: 1.2em; margin-bottom: 20px; font-weight: bold; }
+
+    /* DASHBOARD GRID */
+    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+    .stat-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-top: 5px solid #ddd; text-align: center; }
+    .stat-title { font-size: 1.1em; color: #777; font-weight: bold; margin-bottom: 10px; }
     .stat-icon { font-size: 3em; display: block; margin: 10px 0; }
     .stat-value { font-size: 1.4em; color: #333; font-weight: bold; }
     .stat-bar-bg { width: 100%; height: 10px; background: #eee; border-radius: 5px; margin-top: 10px; overflow: hidden; }
     .stat-bar-fill { height: 100%; width: 0%; transition: width 1s ease; }
+    
+    .card-today { border-color: #2196F3; }
+    .card-week { border-color: #9C27B0; }
+    .card-month { border-color: #FF9800; }
 
-    /* Cores das Bordas baseadas no tipo */
-    .card-today { border-color: #2196F3; } /* Azul */
-    .card-week { border-color: #9C27B0; } /* Roxo */
-    .card-month { border-color: #FF9800; } /* Laranja */
-
-    /* --- TABELA DE ROTINA (Igual anterior) --- */
-    .routine-container {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        border: 2px solid #FFB6C1;
-    }
-
+    /* TABELA */
+    .routine-container { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 2px solid #FFB6C1; position: relative;}
+    
+    /* Overlay de bloqueio visual (opcional, aqui usaremos opacidade nos botões) */
+    
     table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
     th { text-align: left; padding: 15px; background-color: #FF80AB; color: white; border-radius: 8px 8px 0 0; }
     td { padding: 15px; background-color: #FFF; border-top: 2px solid #f0f0f0; border-bottom: 2px solid #f0f0f0; vertical-align: middle; }
@@ -86,31 +90,46 @@
     .sticker-col { text-align: center; font-size: 2.5em; width: 15%; }
     .reward-col { text-align: center; width: 30%; }
 
-    /* Botões */
+    /* BOTÕES DE AÇÃO */
     .score-btn {
         background: none; border: none; font-size: 2.2em; cursor: pointer;
         opacity: 0.15; transition: all 0.2s; margin: 0 5px;
     }
-    .score-btn:hover { opacity: 0.5; transform: scale(1.1); }
-    .score-btn.active-star { opacity: 1; transform: scale(1.2); filter: drop-shadow(0 0 5px gold); }
-    .score-btn.active-x { opacity: 1; transform: scale(1.2); filter: drop-shadow(0 0 5px red); }
+    
+    /* ESTADO DESABILITADO (QUANDO SEM SENHA) */
+    .score-btn.disabled {
+        cursor: not-allowed;
+        filter: grayscale(100%);
+        opacity: 0.1;
+    }
+
+    /* ESTADO HABILITADO E ATIVO */
+    .score-btn:not(.disabled):hover { opacity: 0.5; transform: scale(1.1); }
+    .score-btn.active-star { opacity: 1 !important; transform: scale(1.2); filter: drop-shadow(0 0 5px gold); }
+    .score-btn.active-x { opacity: 1 !important; transform: scale(1.2); filter: drop-shadow(0 0 5px red); }
 
     .btn-add {
         display: block; width: 100%; padding: 15px; margin-top: 20px;
         background-color: #4CAF50; color: white; border: none; border-radius: 10px;
-        font-size: 1.1em; cursor: pointer; font-family: inherit;
+        font-size: 1.1em; cursor: pointer;
     }
+    .btn-add:disabled { background-color: #ccc; cursor: not-allowed; }
 
     @media (max-width: 700px) {
         .dashboard-grid { grid-template-columns: 1fr; }
         .sticker-col { display: none; }
-        .time-col { font-size: 0.9em; }
+        .top-bar { font-size: 0.9em; }
     }
 </style>
 </head>
 <body>
 
 <div class="container">
+    <div class="top-bar">
+        <div id="statusBadge" class="status-badge status-locked">🔒 Modo Visualização</div>
+        <button id="loginBtn" class="btn-login" onclick="toggleLogin()">🔑 Entrar como Pais</button>
+    </div>
+
     <h1>🌟 Rotina da Evelle 🌟</h1>
     <div class="date-display" id="currentDateDisplay">Carregando data...</div>
 
@@ -121,16 +140,14 @@
             <div id="textToday" class="stat-value">0%</div>
             <div class="stat-bar-bg"><div id="barToday" class="stat-bar-fill" style="background:#2196F3;"></div></div>
         </div>
-
         <div class="stat-card card-week">
-            <div class="stat-title">Semana Atual</div>
+            <div class="stat-title">Semana</div>
             <div id="iconWeek" class="stat-icon">🥚</div>
             <div id="textWeek" class="stat-value">0%</div>
             <div class="stat-bar-bg"><div id="barWeek" class="stat-bar-fill" style="background:#9C27B0;"></div></div>
         </div>
-
         <div class="stat-card card-month">
-            <div class="stat-title">Mês Atual</div>
+            <div class="stat-title">Mês</div>
             <div id="iconMonth" class="stat-icon">🥚</div>
             <div id="textMonth" class="stat-value">0%</div>
             <div class="stat-bar-bg"><div id="barMonth" class="stat-bar-fill" style="background:#FF9800;"></div></div>
@@ -147,26 +164,24 @@
                     <th style="text-align:center;">Conquista</th>
                 </tr>
             </thead>
-            <tbody id="tableBody">
-                </tbody>
+            <tbody id="tableBody"></tbody>
         </table>
-        <button class="btn-add" onclick="addNewTask()">➕ Adicionar Atividade Extra</button>
-        <p style="text-align:center; font-size:0.8em; color:#999; margin-top:10px;">
-            * As atividades são salvas automaticamente. Dias anteriores não podem ser alterados.
-        </p>
+        <button id="btnAdd" class="btn-add" onclick="addNewTask()" disabled>➕ Adicionar Atividade Extra (Login Necessário)</button>
     </div>
 </div>
 
 <script>
-    // --- 1. CONFIGURAÇÕES E DADOS PADRÃO ---
-    
-    // Lista padrão para um novo dia
+    // --- CONFIGURAÇÃO DE SEGURANÇA ---
+    const PARENT_PIN = "1234"; // <--- ALTERE SUA SENHA AQUI
+    let isParentLoggedIn = false;
+
+    // --- CONFIGURAÇÃO DE DADOS ---
     const DEFAULT_ROUTINE = [
         { id: 't1', time: '06:00', activity: 'Despertar e Banho', icon: '👧🚿', status: null },
         { id: 't2', time: '06:20', activity: 'Café da Manhã', icon: '👧🥣', status: null },
-        { id: 't3', time: '06:45', activity: 'Kit Saída (Mochila/Dentes)', icon: '👧🦷', status: null },
+        { id: 't3', time: '06:45', activity: 'Kit Saída', icon: '👧🦷', status: null },
         { id: 't4', time: '07:00', activity: 'Ir para Escola', icon: '👋🏫', status: null },
-        { id: 't5', time: '17:00', activity: 'Chegada / Tirar Uniforme', icon: '👧🏠', status: null },
+        { id: 't5', time: '17:00', activity: 'Chegada / Uniforme', icon: '👧🏠', status: null },
         { id: 't6', time: '17:15', activity: 'Gastar Energia!', icon: '👧🤸‍♀️', status: null },
         { id: 't7', time: '19:00', activity: 'Jantar em Família', icon: '👧🍝', status: null },
         { id: 't8', time: '20:00', activity: 'Banho Relaxante', icon: '👧🛀', status: null },
@@ -174,9 +189,8 @@
         { id: 't10', time: '21:00', activity: 'Hora de Dormir', icon: '💤🛌', status: null }
     ];
 
-    const STORAGE_KEY = 'evelle_routine_db_v1';
+    const STORAGE_KEY = 'evelle_routine_secure_v1';
     
-    // Obtém data de hoje formato YYYY-MM-DD
     function getTodayKey() {
         const now = new Date();
         const year = now.getFullYear();
@@ -185,85 +199,108 @@
         return `${year}-${month}-${day}`;
     }
 
-    // --- 2. GERENCIAMENTO DE DADOS (LOCAL STORAGE) ---
-
-    // Carrega todo o banco de dados
+    // --- GERENCIAMENTO DE BANCO DE DADOS ---
     function loadDatabase() {
         const data = localStorage.getItem(STORAGE_KEY);
         return data ? JSON.parse(data) : {};
     }
 
-    // Salva todo o banco de dados
     function saveDatabase(db) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
-        updateDashboards(); // Atualiza os gráficos sempre que salvar
+        updateDashboards();
     }
 
-    // Inicializa o dia de hoje
     let todayData = [];
     const todayKey = getTodayKey();
     const db = loadDatabase();
 
     if (!db[todayKey]) {
-        // Se hoje não existe, cria copiando o padrão
-        // Precisamos fazer "Deep Copy" para não alterar o original
         db[todayKey] = JSON.parse(JSON.stringify(DEFAULT_ROUTINE));
         saveDatabase(db);
     }
-    todayData = db[todayKey]; // Referência para os dados de hoje
+    todayData = db[todayKey];
 
-    // --- 3. FUNÇÕES DE RENDERIZAÇÃO DA TABELA ---
+    // --- SISTEMA DE LOGIN ---
+    function toggleLogin() {
+        if (isParentLoggedIn) {
+            // Fazer Logout
+            isParentLoggedIn = false;
+            document.getElementById('statusBadge').className = 'status-badge status-locked';
+            document.getElementById('statusBadge').innerText = '🔒 Modo Visualização';
+            document.getElementById('loginBtn').innerText = '🔑 Entrar como Pais';
+            document.getElementById('loginBtn').className = 'btn-login';
+            document.getElementById('btnAdd').disabled = true;
+            document.getElementById('btnAdd').innerText = "➕ Adicionar Atividade Extra (Login Necessário)";
+        } else {
+            // Fazer Login
+            const input = prompt("Digite a senha dos pais:");
+            if (input === PARENT_PIN) {
+                isParentLoggedIn = true;
+                document.getElementById('statusBadge').className = 'status-badge status-unlocked';
+                document.getElementById('statusBadge').innerText = '🔓 Modo Pais (Edição)';
+                document.getElementById('loginBtn').innerText = 'Sair';
+                document.getElementById('loginBtn').className = 'btn-login active';
+                document.getElementById('btnAdd').disabled = false;
+                document.getElementById('btnAdd').innerText = "➕ Adicionar Atividade Extra";
+            } else {
+                alert("Senha incorreta!");
+            }
+        }
+        renderTable(); // Re-renderiza para atualizar estado dos botões
+    }
 
+    // --- RENDERIZAÇÃO DA TABELA ---
     function renderTable() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
-
-        // Exibir data formatada no topo
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        
+        const options = { weekday: 'long', day: 'numeric', month: 'long' };
         document.getElementById('currentDateDisplay').textContent = new Date().toLocaleDateString('pt-BR', options);
 
         todayData.forEach((task, index) => {
             const tr = document.createElement('tr');
             
-            // Classes CSS para botões
-            const starClass = task.status === 'star' ? 'active-star' : '';
-            const xClass = task.status === 'x' ? 'active-x' : '';
+            // Verifica se está logado para definir classes
+            const starClass = task.status === 'star' ? 'active-star' : (isParentLoggedIn ? '' : 'disabled');
+            const xClass = task.status === 'x' ? 'active-x' : (isParentLoggedIn ? '' : 'disabled');
 
             tr.innerHTML = `
                 <td class="time-col">${task.time}</td>
                 <td class="activity-col">
                     <strong>${task.activity}</strong>
-                    ${task.details ? `<br><small style="color:#888">${task.details}</small>` : ''}
                 </td>
-                <td class="sticker-col">${task.icon || '📅'}</td>
+                <td class="sticker-col">${task.icon || '📌'}</td>
                 <td class="reward-col">
-                    <button class="score-btn ${starClass}" onclick="toggleTask(${index}, 'star')">⭐</button>
-                    <button class="score-btn ${xClass}" onclick="toggleTask(${index}, 'x')">❌</button>
+                    <button class="score-btn ${starClass}" onclick="tryToggleTask(${index}, 'star')">⭐</button>
+                    <button class="score-btn ${xClass}" onclick="tryToggleTask(${index}, 'x')">❌</button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
     }
 
-    // --- 4. LÓGICA DE INTERAÇÃO ---
+    // --- AÇÃO AO CLICAR ---
+    window.tryToggleTask = function(index, type) {
+        if (!isParentLoggedIn) {
+            alert("🔒 Peça para o Papai ou Mamãe desbloquear para marcar a estrelinha!");
+            return;
+        }
 
-    window.toggleTask = function(index, type) {
         const task = todayData[index];
-        
-        // Se clicar no mesmo, desmarca (null). Se for diferente, marca.
         if (task.status === type) {
             task.status = null;
         } else {
             task.status = type;
         }
 
-        // Salva no banco global e atualiza visual
         db[todayKey] = todayData;
         saveDatabase(db);
         renderTable();
     };
 
     window.addNewTask = function() {
+        if (!isParentLoggedIn) return;
+        
         const time = prompt("Horário:");
         const name = prompt("Atividade:");
         if(time && name) {
@@ -280,46 +317,33 @@
         }
     };
 
-    // --- 5. LÓGICA DE ESTATÍSTICAS E TROFÉUS (O CÉREBRO) ---
-
+    // --- CÁLCULO DE ESTATÍSTICAS ---
     function getTrophy(percentage) {
         if (percentage === 0) return '🥚';
-        if (percentage < 50) return '🥉'; // Bronze
-        if (percentage < 90) return '🥈'; // Prata
-        if (percentage < 100) return '🥇'; // Ouro
-        return '💎'; // Diamante
+        if (percentage < 50) return '🥉';
+        if (percentage < 90) return '🥈';
+        if (percentage < 100) return '🥇';
+        return '💎';
     }
 
     function calculateStats() {
         const now = new Date();
-        
-        // Totais acumuladores
         let stats = {
             today: { stars: 0, total: 0 },
             week: { stars: 0, total: 0 },
             month: { stars: 0, total: 0 }
         };
 
-        // Percorre todos os dias salvos no histórico
         for (const [dateStr, tasks] of Object.entries(db)) {
-            const dateObj = new Date(dateStr + "T00:00:00"); // Força hora local para evitar erro de fuso
-            
-            // Contabiliza estrelas e total de tarefas (exclui tarefas não marcadas ou X)
-            // Lógica: Consideramos "Total" como tarefas que tiveram ALGUMA interação (Star ou X) 
-            // OU todas as tarefas se quisermos ser rígidos. 
-            // Vamos ser rígidos: Total = Todas as tarefas listadas.
-            
+            const dateObj = new Date(dateStr + "T00:00:00");
             const starsCount = tasks.filter(t => t.status === 'star').length;
-            const tasksCount = tasks.length; // Todas as tarefas contam para o total possível
+            const tasksCount = tasks.length;
 
-            // 1. É Hoje?
             if (dateStr === todayKey) {
                 stats.today.stars += starsCount;
                 stats.today.total += tasksCount;
             }
 
-            // 2. É desta Semana? (Domingo a Sábado)
-            // Pega o primeiro dia da semana atual (Domingo)
             const startOfWeek = new Date(now);
             startOfWeek.setDate(now.getDate() - now.getDay());
             startOfWeek.setHours(0,0,0,0);
@@ -333,33 +357,28 @@
                 stats.week.total += tasksCount;
             }
 
-            // 3. É deste Mês?
             if (dateObj.getMonth() === now.getMonth() && dateObj.getFullYear() === now.getFullYear()) {
                 stats.month.stars += starsCount;
                 stats.month.total += tasksCount;
             }
         }
-
         return stats;
     }
 
     function updateDashboards() {
         const stats = calculateStats();
-
-        // Helper para atualizar UI
         const updateCard = (period, data) => {
             const pct = data.total === 0 ? 0 : Math.round((data.stars / data.total) * 100);
             document.getElementById(`text${period}`).innerText = `${pct}%`;
             document.getElementById(`bar${period}`).style.width = `${pct}%`;
             document.getElementById(`icon${period}`).innerText = getTrophy(pct);
         };
-
         updateCard('Today', stats.today);
         updateCard('Week', stats.week);
         updateCard('Month', stats.month);
     }
 
-    // --- INICIALIZAÇÃO ---
+    // Inicializa
     renderTable();
     updateDashboards();
 
