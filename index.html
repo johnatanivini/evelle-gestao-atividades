@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerenciador de Rotina da Evelle</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+
+    body {
+        margin: 0;
+        padding: 20px;
+        background-color: #f0f2f5;
+        font-family: 'Comic Neue', cursive, sans-serif;
+    }
+
+    .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding-bottom: 50px;
+    }
+
+    h1 {
+        text-align: center;
+        color: #E91E63;
+        margin-bottom: 10px;
+        font-size: 2.2em;
+    }
+
+    .date-display {
+        text-align: center;
+        color: #555;
+        font-size: 1.2em;
+        margin-bottom: 20px;
+        font-weight: bold;
+    }
+
+    /* --- GRID DE DASHBOARDS (Hoje, Semana, Mês) --- */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        border-top: 5px solid #ddd;
+        text-align: center;
+        transition: transform 0.2s;
+    }
+    
+    .stat-card:hover { transform: translateY(-5px); }
+
+    .stat-title { font-size: 1.1em; color: #777; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; }
+    .stat-icon { font-size: 3em; display: block; margin: 10px 0; }
+    .stat-value { font-size: 1.4em; color: #333; font-weight: bold; }
+    .stat-bar-bg { width: 100%; height: 10px; background: #eee; border-radius: 5px; margin-top: 10px; overflow: hidden; }
+    .stat-bar-fill { height: 100%; width: 0%; transition: width 1s ease; }
+
+    /* Cores das Bordas baseadas no tipo */
+    .card-today { border-color: #2196F3; } /* Azul */
+    .card-week { border-color: #9C27B0; } /* Roxo */
+    .card-month { border-color: #FF9800; } /* Laranja */
+
+    /* --- TABELA DE ROTINA (Igual anterior) --- */
+    .routine-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 2px solid #FFB6C1;
+    }
+
+    table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+    th { text-align: left; padding: 15px; background-color: #FF80AB; color: white; border-radius: 8px 8px 0 0; }
+    td { padding: 15px; background-color: #FFF; border-top: 2px solid #f0f0f0; border-bottom: 2px solid #f0f0f0; vertical-align: middle; }
+    td:first-child { border-left: 2px solid #f0f0f0; border-radius: 10px 0 0 10px; }
+    td:last-child { border-right: 2px solid #f0f0f0; border-radius: 0 10px 10px 0; }
+
+    .time-col { font-weight: 700; color: #555; width: 15%; }
+    .activity-col { width: 40%; }
+    .sticker-col { text-align: center; font-size: 2.5em; width: 15%; }
+    .reward-col { text-align: center; width: 30%; }
+
+    /* Botões */
+    .score-btn {
+        background: none; border: none; font-size: 2.2em; cursor: pointer;
+        opacity: 0.15; transition: all 0.2s; margin: 0 5px;
+    }
+    .score-btn:hover { opacity: 0.5; transform: scale(1.1); }
+    .score-btn.active-star { opacity: 1; transform: scale(1.2); filter: drop-shadow(0 0 5px gold); }
+    .score-btn.active-x { opacity: 1; transform: scale(1.2); filter: drop-shadow(0 0 5px red); }
+
+    .btn-add {
+        display: block; width: 100%; padding: 15px; margin-top: 20px;
+        background-color: #4CAF50; color: white; border: none; border-radius: 10px;
+        font-size: 1.1em; cursor: pointer; font-family: inherit;
+    }
+
+    @media (max-width: 700px) {
+        .dashboard-grid { grid-template-columns: 1fr; }
+        .sticker-col { display: none; }
+        .time-col { font-size: 0.9em; }
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🌟 Rotina da Evelle 🌟</h1>
+    <div class="date-display" id="currentDateDisplay">Carregando data...</div>
+
+    <div class="dashboard-grid">
+        <div class="stat-card card-today">
+            <div class="stat-title">Hoje</div>
+            <div id="iconToday" class="stat-icon">🥚</div>
+            <div id="textToday" class="stat-value">0%</div>
+            <div class="stat-bar-bg"><div id="barToday" class="stat-bar-fill" style="background:#2196F3;"></div></div>
+        </div>
+
+        <div class="stat-card card-week">
+            <div class="stat-title">Semana Atual</div>
+            <div id="iconWeek" class="stat-icon">🥚</div>
+            <div id="textWeek" class="stat-value">0%</div>
+            <div class="stat-bar-bg"><div id="barWeek" class="stat-bar-fill" style="background:#9C27B0;"></div></div>
+        </div>
+
+        <div class="stat-card card-month">
+            <div class="stat-title">Mês Atual</div>
+            <div id="iconMonth" class="stat-icon">🥚</div>
+            <div id="textMonth" class="stat-value">0%</div>
+            <div class="stat-bar-bg"><div id="barMonth" class="stat-bar-fill" style="background:#FF9800;"></div></div>
+        </div>
+    </div>
+
+    <div class="routine-container">
+        <table id="routineTable">
+            <thead>
+                <tr>
+                    <th>Horário</th>
+                    <th>Atividade</th>
+                    <th class="sticker-col">Evelle</th>
+                    <th style="text-align:center;">Conquista</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                </tbody>
+        </table>
+        <button class="btn-add" onclick="addNewTask()">➕ Adicionar Atividade Extra</button>
+        <p style="text-align:center; font-size:0.8em; color:#999; margin-top:10px;">
+            * As atividades são salvas automaticamente. Dias anteriores não podem ser alterados.
+        </p>
+    </div>
+</div>
+</body>
+</html>
