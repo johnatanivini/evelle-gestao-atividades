@@ -156,5 +156,214 @@
         </p>
     </div>
 </div>
+
+<script>
+    // --- 1. CONFIGURAÇÕES E DADOS PADRÃO ---
+    
+    // Lista padrão para um novo dia
+    const DEFAULT_ROUTINE = [
+        { id: 't1', time: '06:00', activity: 'Despertar e Banho', icon: '👧🚿', status: null },
+        { id: 't2', time: '06:20', activity: 'Café da Manhã', icon: '👧🥣', status: null },
+        { id: 't3', time: '06:45', activity: 'Kit Saída (Mochila/Dentes)', icon: '👧🦷', status: null },
+        { id: 't4', time: '07:00', activity: 'Ir para Escola', icon: '👋🏫', status: null },
+        { id: 't5', time: '17:00', activity: 'Chegada / Tirar Uniforme', icon: '👧🏠', status: null },
+        { id: 't6', time: '17:15', activity: 'Gastar Energia!', icon: '👧🤸‍♀️', status: null },
+        { id: 't7', time: '19:00', activity: 'Jantar em Família', icon: '👧🍝', status: null },
+        { id: 't8', time: '20:00', activity: 'Banho Relaxante', icon: '👧🛀', status: null },
+        { id: 't9', time: '20:30', activity: 'Hora da História', icon: '👧📖', status: null },
+        { id: 't10', time: '21:00', activity: 'Hora de Dormir', icon: '💤🛌', status: null }
+    ];
+
+    const STORAGE_KEY = 'evelle_routine_db_v1';
+    
+    // Obtém data de hoje formato YYYY-MM-DD
+    function getTodayKey() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    // --- 2. GERENCIAMENTO DE DADOS (LOCAL STORAGE) ---
+
+    // Carrega todo o banco de dados
+    function loadDatabase() {
+        const data = localStorage.getItem(STORAGE_KEY);
+        return data ? JSON.parse(data) : {};
+    }
+
+    // Salva todo o banco de dados
+    function saveDatabase(db) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+        updateDashboards(); // Atualiza os gráficos sempre que salvar
+    }
+
+    // Inicializa o dia de hoje
+    let todayData = [];
+    const todayKey = getTodayKey();
+    const db = loadDatabase();
+
+    if (!db[todayKey]) {
+        // Se hoje não existe, cria copiando o padrão
+        // Precisamos fazer "Deep Copy" para não alterar o original
+        db[todayKey] = JSON.parse(JSON.stringify(DEFAULT_ROUTINE));
+        saveDatabase(db);
+    }
+    todayData = db[todayKey]; // Referência para os dados de hoje
+
+    // --- 3. FUNÇÕES DE RENDERIZAÇÃO DA TABELA ---
+
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        // Exibir data formatada no topo
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('currentDateDisplay').textContent = new Date().toLocaleDateString('pt-BR', options);
+
+        todayData.forEach((task, index) => {
+            const tr = document.createElement('tr');
+            
+            // Classes CSS para botões
+            const starClass = task.status === 'star' ? 'active-star' : '';
+            const xClass = task.status === 'x' ? 'active-x' : '';
+
+            tr.innerHTML = `
+                <td class="time-col">${task.time}</td>
+                <td class="activity-col">
+                    <strong>${task.activity}</strong>
+                    ${task.details ? `<br><small style="color:#888">${task.details}</small>` : ''}
+                </td>
+                <td class="sticker-col">${task.icon || '📅'}</td>
+                <td class="reward-col">
+                    <button class="score-btn ${starClass}" onclick="toggleTask(${index}, 'star')">⭐</button>
+                    <button class="score-btn ${xClass}" onclick="toggleTask(${index}, 'x')">❌</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // --- 4. LÓGICA DE INTERAÇÃO ---
+
+    window.toggleTask = function(index, type) {
+        const task = todayData[index];
+        
+        // Se clicar no mesmo, desmarca (null). Se for diferente, marca.
+        if (task.status === type) {
+            task.status = null;
+        } else {
+            task.status = type;
+        }
+
+        // Salva no banco global e atualiza visual
+        db[todayKey] = todayData;
+        saveDatabase(db);
+        renderTable();
+    };
+
+    window.addNewTask = function() {
+        const time = prompt("Horário:");
+        const name = prompt("Atividade:");
+        if(time && name) {
+            todayData.push({
+                id: Date.now(),
+                time: time,
+                activity: name,
+                icon: '📌',
+                status: null
+            });
+            db[todayKey] = todayData;
+            saveDatabase(db);
+            renderTable();
+        }
+    };
+
+    // --- 5. LÓGICA DE ESTATÍSTICAS E TROFÉUS (O CÉREBRO) ---
+
+    function getTrophy(percentage) {
+        if (percentage === 0) return '🥚';
+        if (percentage < 50) return '🥉'; // Bronze
+        if (percentage < 90) return '🥈'; // Prata
+        if (percentage < 100) return '🥇'; // Ouro
+        return '💎'; // Diamante
+    }
+
+    function calculateStats() {
+        const now = new Date();
+        
+        // Totais acumuladores
+        let stats = {
+            today: { stars: 0, total: 0 },
+            week: { stars: 0, total: 0 },
+            month: { stars: 0, total: 0 }
+        };
+
+        // Percorre todos os dias salvos no histórico
+        for (const [dateStr, tasks] of Object.entries(db)) {
+            const dateObj = new Date(dateStr + "T00:00:00"); // Força hora local para evitar erro de fuso
+            
+            // Contabiliza estrelas e total de tarefas (exclui tarefas não marcadas ou X)
+            // Lógica: Consideramos "Total" como tarefas que tiveram ALGUMA interação (Star ou X) 
+            // OU todas as tarefas se quisermos ser rígidos. 
+            // Vamos ser rígidos: Total = Todas as tarefas listadas.
+            
+            const starsCount = tasks.filter(t => t.status === 'star').length;
+            const tasksCount = tasks.length; // Todas as tarefas contam para o total possível
+
+            // 1. É Hoje?
+            if (dateStr === todayKey) {
+                stats.today.stars += starsCount;
+                stats.today.total += tasksCount;
+            }
+
+            // 2. É desta Semana? (Domingo a Sábado)
+            // Pega o primeiro dia da semana atual (Domingo)
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay());
+            startOfWeek.setHours(0,0,0,0);
+            
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+            endOfWeek.setHours(23,59,59,999);
+
+            if (dateObj >= startOfWeek && dateObj <= endOfWeek) {
+                stats.week.stars += starsCount;
+                stats.week.total += tasksCount;
+            }
+
+            // 3. É deste Mês?
+            if (dateObj.getMonth() === now.getMonth() && dateObj.getFullYear() === now.getFullYear()) {
+                stats.month.stars += starsCount;
+                stats.month.total += tasksCount;
+            }
+        }
+
+        return stats;
+    }
+
+    function updateDashboards() {
+        const stats = calculateStats();
+
+        // Helper para atualizar UI
+        const updateCard = (period, data) => {
+            const pct = data.total === 0 ? 0 : Math.round((data.stars / data.total) * 100);
+            document.getElementById(`text${period}`).innerText = `${pct}%`;
+            document.getElementById(`bar${period}`).style.width = `${pct}%`;
+            document.getElementById(`icon${period}`).innerText = getTrophy(pct);
+        };
+
+        updateCard('Today', stats.today);
+        updateCard('Week', stats.week);
+        updateCard('Month', stats.month);
+    }
+
+    // --- INICIALIZAÇÃO ---
+    renderTable();
+    updateDashboards();
+
+</script>
+
 </body>
 </html>
